@@ -1,6 +1,7 @@
 require 'oystercard'
 
 describe Oystercard do
+  let(:station) { double('station') }
 
   it 'oystercard has a balance of 0' do
     expect(subject.balance).to eq Oystercard::DEFAULT_BALANCE
@@ -19,11 +20,11 @@ describe Oystercard do
       expect{subject.top_up(1)}.to raise_error("Warning: top-up amount will exceed maximum balance of £#{max_balance}")
     end
   end
-
+  # private method - reference for .send syntax
   describe '#deduct' do
     it 'Card deducts cash from balance' do
       subject.top_up(10)
-      expect{subject.deduct(10)}.to change{subject.balance}.by -10
+      expect { subject.send(:deduct, 10) }.to change{subject.balance}.by -10
     end
   end
 
@@ -32,17 +33,25 @@ describe Oystercard do
       subject.top_up(1)
       expect(subject).to respond_to(:touch_in)
     end
+
     context 'after touching in' do
+      before { subject.top_up(1) }
+
       it 'In-journey is true' do
-        subject.top_up(1)
-        subject.touch_in
+        subject.touch_in(station)
         expect(subject).to be_in_journey
       end
+
+      it 'saves the entry station' do
+        subject.touch_in(station)
+        expect(subject.entry_station).to be station
+      end
     end
+
     context 'when balance is below minimum' do
       it 'raises an error' do
-        min_balance = Oystercard::MINIMUM_BALANCE
-        expect{subject.touch_in}.to raise_error "Minimum balance required: £#{min_balance}"
+        min_balance = Oystercard::MINIMUM_FARE
+        expect{ subject.touch_in(station) }.to raise_error "Minimum balance required: £#{min_balance}"
       end
     end
   end
@@ -51,12 +60,23 @@ describe Oystercard do
     it 'Card responds to touch out' do
       expect(subject).to respond_to(:touch_out)
     end
+
     context 'after touching out' do
+      before { subject.top_up(1) }
+
       it 'In journey is false' do
-        subject.top_up(1)
-        subject.touch_in
+        subject.touch_in(station)
         subject.touch_out
         expect(subject).to_not be_in_journey
+      end
+
+      it 'deducts fare from balance' do
+        expect { subject.touch_out }.to change { subject.balance }.by(-1)
+      end
+
+      it 'resets entry_station to nil' do
+        subject.touch_in(station); subject.touch_out
+        expect(subject.entry_station).to be nil
       end
     end
   end
