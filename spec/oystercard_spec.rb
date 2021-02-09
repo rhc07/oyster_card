@@ -20,10 +20,44 @@ describe Oystercard do
     end
   end
 
-  describe '#deduct'do
+  describe '#deduct' do
     it 'Card deducts cash from balance' do
       subject.top_up(10)
       expect{subject.deduct(10)}.to change{subject.balance}.by -10
+    end
+  end
+
+  describe '#touch_in' do
+    it 'Card responds to touch in' do
+      subject.top_up(1)
+      expect(subject).to respond_to(:touch_in)
+    end
+    context 'after touching in' do
+      it 'In-journey is true' do
+        subject.top_up(1)
+        subject.touch_in
+        expect(subject).to be_in_journey
+      end
+    end
+    context 'when balance is below minimum' do
+      it 'raises an error' do
+        min_balance = Oystercard::MINIMUM_BALANCE
+        expect{subject.touch_in}.to raise_error "Minimum balance required: £#{min_balance}"
+      end
+    end
+  end
+
+  describe '#touch_out' do
+    it 'Card responds to touch out' do
+      expect(subject).to respond_to(:touch_out)
+    end
+    context 'after touching out' do
+      it 'In journey is false' do
+        subject.top_up(1)
+        subject.touch_in
+        subject.touch_out
+        expect(subject).to_not be_in_journey
+      end
     end
   end
 end
