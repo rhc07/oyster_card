@@ -2,6 +2,7 @@ require 'oystercard'
 
 describe Oystercard do
   let(:station) { double('station') }
+  let(:exit_station) { double('exit station') }
 
   it 'oystercard has a balance of 0' do
     expect(subject.balance).to eq Oystercard::DEFAULT_BALANCE
@@ -66,17 +67,22 @@ describe Oystercard do
 
       it 'In journey is false' do
         subject.touch_in(station)
-        subject.touch_out
+        subject.touch_out(exit_station)
         expect(subject).to_not be_in_journey
       end
 
       it 'deducts fare from balance' do
-        expect { subject.touch_out }.to change { subject.balance }.by(-1)
+        expect { subject.touch_out(exit_station) }.to change { subject.balance }.by(-1)
       end
 
       it 'resets entry_station to nil' do
-        subject.touch_in(station); subject.touch_out
+        subject.touch_in(station); subject.touch_out(exit_station)
         expect(subject.entry_station).to be nil
+      end
+
+      it 'saves exit station' do
+        subject.touch_in(station); subject.touch_out(exit_station)
+        expect(subject.exit_station).to be exit_station
       end
     end
   end
