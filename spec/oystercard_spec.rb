@@ -86,4 +86,13 @@ describe Oystercard do
       end
     end
   end
+
+  describe '#journey_history' do
+     it 'Shows journey history of user' do
+       subject.top_up(10)
+       subject.touch_in(station)
+       subject.touch_out(exit_station)
+       expect(subject.journey_history).to eq (journey[:entry_station], journey[:exit_station])
+     end
+  end
 end
