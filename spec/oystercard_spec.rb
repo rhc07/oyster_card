@@ -38,11 +38,6 @@ describe Oystercard do
     context 'after touching in' do
       before { subject.top_up(1) }
 
-      it 'In-journey is true' do
-        subject.touch_in(station)
-        expect(subject).to be_in_journey
-      end
-
       it 'saves the entry station' do
         subject.touch_in(station)
         expect(subject.entry_station).to be station
@@ -65,12 +60,6 @@ describe Oystercard do
     context 'after touching out' do
       before { subject.top_up(1) }
 
-      it 'In journey is false' do
-        subject.touch_in(station)
-        subject.touch_out(exit_station)
-        expect(subject).to_not be_in_journey
-      end
-
       it 'deducts fare from balance' do
         expect { subject.touch_out(exit_station) }.to change { subject.balance }.by(-1)
       end
@@ -87,12 +76,31 @@ describe Oystercard do
     end
   end
 
+  describe '#in_journey?' do
+    before { subject.top_up(1) }
+    it 'In-journey is true' do
+      subject.touch_in(station)
+      expect(subject).to be_in_journey
+    end
+
+    it 'In-journey is false' do
+      subject.touch_in(station)
+      subject.touch_out(exit_station)
+      expect(subject).to_not be_in_journey
+    end
+  end
+
+
   describe '#journey_history' do
      it 'Shows journey history of user' do
        subject.top_up(10)
        subject.touch_in(station)
        subject.touch_out(exit_station)
-       expect(subject.journey_history).to eq (journey[:entry_station], journey[:exit_station])
+       expect(subject.journey_history).to eq [{entry: station, exit: exit_station}]
+     end
+
+     it 'it checks that journey history is empty by default' do
+       expect(subject.journey_history).to eq []
      end
   end
 end
